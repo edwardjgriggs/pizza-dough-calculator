@@ -14,16 +14,9 @@ services:
         pip install --no-cache-dir -r /app/requirements.txt && \
         python /app/Dough_Calculator.py
     ports:
-      - "5080:5000"                            # access via http://192.168.0.162:5080
+      - "5080:5000"
     volumes:
       - /DATA/AppData/edsdoughcalc:/app
     environment:
       - FLASK_ENV=production
       - TZ=America/New_York
-    labels:
-      io.casaos.category: "Utilities"
-      io.casaos.title: "Pizza Dough Calculator"
-      io.casaos.description: "Flask app to calculate pizza dough and ingredient weights."
-      io.casaos.icon: "https://icon.casaos.io/main/all/python.png"
-      io.casaos.port: "5080"
-      io.casaos.web: "http://192.168.0.162:5080"
