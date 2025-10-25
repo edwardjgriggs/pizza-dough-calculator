@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  pizza_dough_calc:
+    image: python:3.11-slim
+    container_name: pizza_dough_calc
+    working_dir: /app
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt &&
+             python Dough_Calculator.py"
+    ports:
+      - "5080:5080"
+    restart: unless-stopped
