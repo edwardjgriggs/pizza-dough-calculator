@@ -1,9 +1,9 @@
 version: "3.9"
 
 services:
-  doughcalc:
+  pizza-dough-flask:
     image: python:3.11-slim
-    container_name: doughcalc
+    container_name: pizza-dough-flask
     restart: unless-stopped
     working_dir: /app
     command: >
