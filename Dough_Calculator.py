@@ -2,7 +2,6 @@ from flask import Flask, render_template_string, request
 
 app = Flask(__name__)
 
-# --- HTML Template ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html>
@@ -100,12 +99,11 @@ HTML_TEMPLATE = """
 </html>
 """
 
-# --- Pizza Dough Logic ---
 def calculate_pizza_dough(size_in, num_pizzas, thickness):
     if size_in < 10 or size_in > 20:
         return None, "Pizza size must be between 10 and 20 inches."
 
-    base_weight = 187  # grams, 10" regular pizza
+    base_weight = 187  # grams for 10" regular pizza
     size_factor = (size_in / 10) ** 2
     thickness_factors = {"thin": 0.856, "regular": 1.0, "thick": 1.305}
     t_factor = thickness_factors.get(thickness.lower(), 1.0)
@@ -113,7 +111,7 @@ def calculate_pizza_dough(size_in, num_pizzas, thickness):
     dough_per_pizza = base_weight * size_factor * t_factor
     total_dough = dough_per_pizza * num_pizzas
 
-    # Baker's percentages
+    # Baker’s percentages
     flour_ratio = 1 / (1 + 0.620 + 0.0040 + 0.0248 + 0.0203 + 0.0338)
     flour = total_dough * flour_ratio
     water = flour * 0.620
@@ -138,8 +136,6 @@ def calculate_pizza_dough(size_in, num_pizzas, thickness):
 
     return result, None
 
-
-# --- Flask Route ---
 @app.route("/", methods=["GET", "POST"])
 def index():
     result, error = None, None
@@ -150,7 +146,5 @@ def index():
         result, error = calculate_pizza_dough(size, num_pizzas, thickness)
     return render_template_string(HTML_TEMPLATE, result=result, error=error)
 
-
-# --- Run App ---
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
