@@ -1,0 +1,8 @@
+version: "3.9"
+services:
+  doughcalc:
+    build: .
+    container_name: doughcalc
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
