@@ -1,22 +1,119 @@
-import streamlit as st
+from flask import Flask, render_template_string, request
 
+app = Flask(__name__)
+
+# --- HTML Template ---
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pizza Dough Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #faf9f6;
+            margin: 40px auto;
+            max-width: 600px;
+            color: #222;
+        }
+        h1 { color: #a53a1f; text-align: center; }
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input, select, button {
+            padding: 8px;
+            margin-top: 5px;
+            width: 100%;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #38414b;
+            color: white;
+            border: none;
+            font-size: 16px;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #2b323a; }
+        .error {
+            color: red;
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .result {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        ul { list-style-type: none; padding-left: 0; }
+        li { margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🍞 Pizza Dough Calculator</h1>
+    <form method="POST">
+        <label>Pizza Size (in inches)</label>
+        <input type="number" name="size" step="0.5" min="8" max="24" value="12" required>
+
+        <label>Number of Pizzas</label>
+        <input type="number" name="num_pizzas" min="1" value="1" required>
+
+        <label>Pizza Thickness</label>
+        <select name="thickness">
+            <option value="thin">Thin</option>
+            <option value="regular" selected>Regular</option>
+            <option value="thick">Thick</option>
+        </select>
+
+        <button type="submit">Calculate Dough</button>
+    </form>
+
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+
+    {% if result %}
+    <div class="result">
+        <h2>🍕 Results</h2>
+        <p><strong>Target Dough Ball Size:</strong> {{ result['dough_per_pizza']|round }} g each</p>
+        <p><strong>Total Dough:</strong> {{ result['total_dough']|round }} g for {{ result['num_pizzas'] }} pizza(s)</p>
+
+        <h3>Ingredients (grams)</h3>
+        <ul>
+            {% for name, grams in result['ingredients'].items() %}
+                <li><strong>{{ name }}:</strong> {{ grams|round(1) }} g</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</body>
+</html>
+"""
+
+# --- Pizza Dough Logic ---
 def calculate_pizza_dough(size_in, num_pizzas, thickness):
-    # --- Check for valid size ---
     if size_in < 10 or size_in > 20:
-        st.error("⚠️ Sorry, that pizza size is out of range (10–20 inches).")
-        return
+        return None, "Pizza size must be between 10 and 20 inches."
 
-    # --- Base settings ---
     base_weight = 187  # grams, 10" regular pizza
     size_factor = (size_in / 10) ** 2
     thickness_factors = {"thin": 0.856, "regular": 1.0, "thick": 1.305}
     t_factor = thickness_factors.get(thickness.lower(), 1.0)
 
-    # --- Dough weight ---
     dough_per_pizza = base_weight * size_factor * t_factor
     total_dough = dough_per_pizza * num_pizzas
 
-    # --- Baker's percentages ---
+    # Baker's percentages
     flour_ratio = 1 / (1 + 0.620 + 0.0040 + 0.0248 + 0.0203 + 0.0338)
     flour = total_dough * flour_ratio
     water = flour * 0.620
@@ -25,26 +122,35 @@ def calculate_pizza_dough(size_in, num_pizzas, thickness):
     sugar = flour * 0.0203
     oil = flour * 0.0338
 
-    # --- Results ---
-    st.subheader("🍕 Results")
-    st.write(f"**Target Dough Ball Size:** {dough_per_pizza:.0f} g each")
-    st.write(f"**Total Dough:** {total_dough:.0f} g for {num_pizzas} pizza(s)")
+    result = {
+        "num_pizzas": num_pizzas,
+        "dough_per_pizza": dough_per_pizza,
+        "total_dough": total_dough,
+        "ingredients": {
+            "Bread Flour": flour,
+            "Water": water,
+            "Yeast": yeast,
+            "Salt": salt,
+            "Sugar": sugar,
+            "Olive Oil": oil
+        }
+    }
 
-    st.markdown("### Ingredients (grams)")
-    st.write(f"- Bread Flour: **{flour:.0f} g**")
-    st.write(f"- Water: **{water:.0f} g**")
-    st.write(f"- Yeast: **{yeast:.1f} g**")
-    st.write(f"- Salt: **{salt:.0f} g**")
-    st.write(f"- Sugar: **{sugar:.0f} g**")
-    st.write(f"- Olive Oil: **{oil:.0f} g**")
+    return result, None
 
 
-# --- Streamlit UI ---
-st.title("🍞 Pizza Dough Calculator")
+# --- Flask Route ---
+@app.route("/", methods=["GET", "POST"])
+def index():
+    result, error = None, None
+    if request.method == "POST":
+        size = float(request.form["size"])
+        num_pizzas = int(request.form["num_pizzas"])
+        thickness = request.form["thickness"]
+        result, error = calculate_pizza_dough(size, num_pizzas, thickness)
+    return render_template_string(HTML_TEMPLATE, result=result, error=error)
 
-size = st.number_input("Pizza Size (in inches)", min_value=8.0, max_value=24.0, value=12.0, step=0.5)
-qty = st.number_input("Number of Pizzas", min_value=1, value=1, step=1)
-thickness = st.radio("Pizza Thickness", ["thin", "regular", "thick"])
 
-if st.button("Calculate Dough"):
-    calculate_pizza_dough(size, qty, thickness)
+# --- Run App ---
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
