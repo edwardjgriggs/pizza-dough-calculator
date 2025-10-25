@@ -1,20 +1,22 @@
 version: "3.9"
 
 services:
-  doughcalc:
+  edsdoughcalc:
     image: python:3.11-slim
-    container_name: doughcalc
+    container_name: edsdoughcalc
     restart: unless-stopped
     working_dir: /app
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        pip install --no-cache-dir -r requirements.txt
-        python Dough_Calculator.py
+        apt-get update && apt-get install -y git && \
+        git clone http://192.168.0.162:3002/edwardjgriggs/pizza-dough-calculator.git /app && \
+        pip install --no-cache-dir -r /app/requirements.txt && \
+        python /app/Dough_Calculator.py
     ports:
-      - "5050:5000"                            # Use 5050 externally so it doesn’t conflict
+      - "5050:5000"                            # Access app via http://192.168.0.162:5050
     volumes:
-      - /DATA/AppData/doughcalc:/app           # Mount CasaOS app directory into /app
+      - /DATA/AppData/edsdoughcalc:/app        # CasaOS volume mount for persistence
     environment:
       - FLASK_ENV=production
       - TZ=America/New_York
