@@ -1,29 +1,13 @@
 version: "3.9"
 
 services:
-  edsdoughcalc:
+  pizza_dough_calc:
     image: python:3.11-slim
-    container_name: edsdoughcalc
-    restart: unless-stopped
+    container_name: pizza_dough_calc
     working_dir: /app
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        apt-get update && \
-        apt-get install -y git && \
-        git clone http://192.168.0.162:3002/edwardjgriggs/pizza-dough-calculator.git /app && \
-        pip install --no-cache-dir -r /app/requirements.txt && \
-        python /app/Dough_Calculator.py
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt &&
+             python Dough_Calculator.py"
     ports:
-      - "5080:5000"                    # External port 5080, internal 5000
-    volumes:
-      - /DATA/AppData/edsdoughcalc:/app
-    environment:
-      - FLASK_ENV=production
-      - TZ=America/New_York
-    labels:
-      io.casaos.category: "Utilities"
-      io.casaos.title: "Pizza Dough Calculator"
-      io.casaos.description: "Flask app to calculate pizza dough and ingredient weights."
-      io.casaos.icon: "https://icon.casaos.io/main/all/python.png"
-      i
+      - "5080:5080"
+    restart: unless-stopped
